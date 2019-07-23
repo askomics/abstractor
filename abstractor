@@ -1,0 +1,214 @@
+import argparse
+import json
+import textwrap
+from libabstractor.SparqlQuery import SparqlQuery
+
+
+class Abstractor():
+    """Abstractor main class"""
+
+    def __init__(self):
+        """Init
+
+        Parse args and get prefixex
+        """
+        parser = argparse.ArgumentParser(description="Generate AskOmics abstraction from a SPARQL endpoint")
+
+        parser.add_argument("-e", "--endpoint", type=str, help="SPARQL enpoint url", required=True)
+        parser.add_argument("-p", "--prefix", type=str, help="SPARQL prefix uri for :", required=True)
+        parser.add_argument("-o", "--output", type=str, help="Output ttl file", default="abstraction.ttl")
+
+        self.args = parser.parse_args()
+
+        # Get common prefix from the json file
+        with open("prefixes.json", "r") as file:
+            file_content = file.read()
+
+        self.prefixes = json.loads(file_content)
+        self.prefixes[":"] = self.args.prefix
+
+    def get_entities_and_relations(self):
+        """Get all entities and relations
+
+        Returns
+        -------
+        list, list
+            header and results
+        """
+        sparql = SparqlQuery(self.args.endpoint, self.args.prefix, self.prefixes)
+
+        query = textwrap.dedent('''
+        SELECT DISTINCT ?entity ?rel ?valueType
+        WHERE {
+            # Get entities
+            ?entity a ?type1 .
+            # Relations
+            ?s a ?entity .
+            ?s ?rel ?value .
+            ?value a ?valueType .
+            ?valueType a ?type2 .
+
+        }
+        ''')
+
+        return sparql.process_query(query)
+
+    def get_entities_and_numeric_attributes(self):
+        """Get all entities and numeric attributes
+
+        Returns
+        -------
+        list, list
+            header and results
+        """
+        sparql = SparqlQuery(self.args.endpoint, self.args.prefix, self.prefixes)
+
+        query = textwrap.dedent('''
+        SELECT DISTINCT ?entity ?attr
+        WHERE {
+            # Get entities
+            ?entity a ?type1 .
+            # Attributes
+            ?subject a ?entity .
+            ?subject ?attr ?value .
+            FILTER (isNumeric(?value))
+        }
+        ''')
+
+        return sparql.process_query(query)
+
+    def get_entities_and_text_attributes(self):
+        """Get all entities and text attributes
+
+        Returns
+        -------
+        list, list
+            header and results
+        """
+        sparql = SparqlQuery(self.args.endpoint, self.args.prefix, self.prefixes)
+
+        query = textwrap.dedent('''
+        SELECT DISTINCT ?entity ?attr
+        WHERE {
+            # Get entities
+            ?entity a ?type1 .
+            # Attributes
+            ?subject a ?entity .
+            ?subject ?attr ?value .
+            FILTER (isLiteral(?value))
+            FILTER (!isNumeric(?value))
+        }
+        ''')
+
+        return sparql.process_query(query)
+
+    def main(self):
+        """main"""
+        sparql = SparqlQuery(self.args.endpoint, self.args.prefix, self.prefixes)
+
+        with open(self.args.output, "w") as file:
+
+            # Insert prefix
+            file.write(sparql.get_ttl_prefix())
+
+            # launch queries
+            try:
+                result_entities = self.get_entities_and_relations()
+                result_numeric_attr = self.get_entities_and_numeric_attributes()
+                result_text_attr = self.get_entities_and_text_attributes()
+            except Exception as e:
+                raise e
+
+            entities = []
+
+            # Entities and relations
+            for result in result_entities:
+                entity = result["entity"]
+                relation = result["rel"] if "rel" in result else None
+                relation_range = result["valueType"] if "valueType" in result else None
+
+                if not entity.startswith(self.args.prefix):
+                    continue
+
+                # Write ttl for entities
+                if entity not in entities:
+                    entities.append(entity)
+                    ttl = textwrap.dedent('''
+                    <{}> a :entity ,
+                            :startPoint ,
+                            owl:Class ;
+                        rdfs:label "{}" .
+                    '''.format(
+                        entity,
+                        sparql.get_label(entity)
+                    ))
+
+                    file.write(ttl)
+
+                if not relation.startswith(self.args.prefix):
+                    continue
+
+                # write ttl for relations
+                if relation and relation_range:
+                    ttl = textwrap.dedent('''
+                    <{}> a owl:ObjectProperty ,
+                            :AskomicsRelation ;
+                        rdfs:label "{}" ;
+                        rdfs:domain <{}> ;
+                        rdfs:range <{}> .
+                    '''.format(
+                        relation,
+                        sparql.get_label(relation),
+                        entity,
+                        relation_range
+                    ))
+
+                    file.write(ttl)
+
+            # Numeric attributes
+            for result in result_numeric_attr:
+                entity = result["entity"]
+                attribute = result["attr"] if "attr" in result else None
+
+                if not entity.startswith(self.args.prefix) and attribute.startswith(self.args.prefix):
+                    continue
+
+                if attribute:
+                    ttl = textwrap.dedent('''
+                    <{}> a owl:DatatypeProperty ;
+                        rdfs:label "{}" ;
+                        rdfs:domain <{}> ;
+                        rdfs:range xsd:decimal .
+                    '''.format(
+                        attribute,
+                        sparql.get_label(attribute),
+                        entity
+                    ))
+
+                    file.write(ttl)
+
+            for result in result_text_attr:
+                entity = result["entity"]
+                attribute = result["attr"] if "attr" in result else None
+
+                if not entity.startswith(self.args.prefix) and attribute.startswith(self.args.prefix):
+                    continue
+
+                if attribute:
+                    ttl = '''
+                    <{}> a owl:DatatypeProperty ;
+                        rdfs:label "{}" ;
+                        rdfs:domain <{}> ;
+                        rdfs:range xsd:string .
+                    '''.format(
+                        attribute,
+                        sparql.get_label(attribute),
+                        entity
+                    )
+
+                    file.write(ttl)
+
+
+if __name__ == '__main__':
+    """main"""
+    Abstractor().main()
