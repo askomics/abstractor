@@ -32,7 +32,7 @@ class SparqlQuery():
         for prefix, uri in self.prefixes.items():
             prefixes_string += "PREFIX {} <{}>\n".format(prefix, uri)
 
-        return prefixes_string + "\n"
+        return prefixes_string
 
     def get_ttl_prefix(self):
         """Get a turtle prefix string
@@ -46,7 +46,7 @@ class SparqlQuery():
         for prefix, uri in self.prefixes.items():
             prefixes_string += "@prefix {} <{}> .\n".format(prefix, uri)
 
-        return prefixes_string + "\n"
+        return prefixes_string
 
     def execute_query(self, query):
         """Execute a sparql query
@@ -62,14 +62,15 @@ class SparqlQuery():
             result
         """
         endpoint = SPARQLWrapper(self.endpoint)
-        endpoint.setQuery(self.get_sparl_prefix() + query)
+        prefixed_query = self.get_sparl_prefix() + query
+        # print(prefixed_query)
+        endpoint.setQuery(prefixed_query)
 
         endpoint.setReturnFormat(JSON)
         try:
             results = endpoint.query().convert()
         except Exception as e:
-            print(str(e))
-            print("Failed to get results from query:\n{}".format(query))
+            raise e
 
         return results
 
@@ -83,8 +84,8 @@ class SparqlQuery():
 
         Returns
         -------
-        list, list
-            Header and data
+        list
+            Parsed results
         """
         try:
             data = []
@@ -96,7 +97,7 @@ class SparqlQuery():
 
         except Exception as e:
             print(str(e))
-            return [], []
+            return []
 
         return data
 

@@ -111,11 +111,9 @@ class Abstractor():
             # Insert prefix
             file.write(sparql.get_ttl_prefix())
 
-            # launch queries
+            # launch query
             try:
                 result_entities = self.get_entities_and_relations()
-                result_numeric_attr = self.get_entities_and_numeric_attributes()
-                result_text_attr = self.get_entities_and_text_attributes()
             except Exception as e:
                 raise e
 
@@ -165,6 +163,12 @@ class Abstractor():
 
                     file.write(ttl)
 
+            # launch query
+            try:
+                result_numeric_attr = self.get_entities_and_numeric_attributes()
+            except Exception as e:
+                raise e
+
             # Numeric attributes
             for result in result_numeric_attr:
                 entity = result["entity"]
@@ -186,6 +190,12 @@ class Abstractor():
                     ))
 
                     file.write(ttl)
+
+            # launch query
+            try:
+                result_text_attr = self.get_entities_and_text_attributes()
+            except Exception as e:
+                raise e
 
             for result in result_text_attr:
                 entity = result["entity"]

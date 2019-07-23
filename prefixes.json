@@ -4,11 +4,8 @@
     "rdfs:": "http://www.w3.org/2000/01/rdf-schema#",
     "dc:": "http://purl.org/dc/elements/1.1/",
     "prov:": "http://www.w3.org/ns/prov#",
-    "up:": "http://purl.uniprot.org/core/",
     "xsd:": "http://www.w3.org/2001/XMLSchema#",
     "skos:": "http://www.w3.org/2004/02/skos/core#",
-    "uniprot:": "http://purl.uniprot.org/uniprot/",
-    "unipage:": "http://www.uniprot.org/uniprot/",
     "chebi:": "http://purl.obolibrary.org/obo/",
     "drugbankdrugs:": "http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugs/"
 }
