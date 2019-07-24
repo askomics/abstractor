@@ -3,7 +3,7 @@
 import argparse
 import json
 import textwrap
-from abstractor.libabstractor.SparqlQuery import SparqlQuery
+from libabstractor.SparqlQuery import SparqlQuery
 
 
 class Abstractor(object):
