@@ -1,7 +1,6 @@
 #! /usr/bin/python3
 
 import argparse
-import json
 import textwrap
 from libabstractor.SparqlQuery import SparqlQuery
 
@@ -22,13 +21,6 @@ class Abstractor(object):
 
         self.args = parser.parse_args()
 
-        # Get common prefix from the json file
-        with open("prefixes.json", "r") as file:
-            file_content = file.read()
-
-        self.prefixes = json.loads(file_content)
-        self.prefixes[":"] = self.args.prefix
-
     def get_entities_and_relations(self):
         """Get all entities and relations
 
@@ -37,7 +29,7 @@ class Abstractor(object):
         list, list
             header and results
         """
-        sparql = SparqlQuery(self.args.endpoint, self.args.prefix, self.prefixes)
+        sparql = SparqlQuery(self.args.endpoint, self.args.prefix)
 
         query = textwrap.dedent('''
         SELECT DISTINCT ?entity ?rel ?valueType
@@ -63,7 +55,7 @@ class Abstractor(object):
         list, list
             header and results
         """
-        sparql = SparqlQuery(self.args.endpoint, self.args.prefix, self.prefixes)
+        sparql = SparqlQuery(self.args.endpoint, self.args.prefix)
 
         query = textwrap.dedent('''
         SELECT DISTINCT ?entity ?attr
@@ -87,7 +79,7 @@ class Abstractor(object):
         list, list
             header and results
         """
-        sparql = SparqlQuery(self.args.endpoint, self.args.prefix, self.prefixes)
+        sparql = SparqlQuery(self.args.endpoint, self.args.prefix)
 
         query = textwrap.dedent('''
         SELECT DISTINCT ?entity ?attr
@@ -106,7 +98,7 @@ class Abstractor(object):
 
     def main(self):
         """main"""
-        sparql = SparqlQuery(self.args.endpoint, self.args.prefix, self.prefixes)
+        sparql = SparqlQuery(self.args.endpoint, self.args.prefix)
 
         with open(self.args.output, "w") as file:
 

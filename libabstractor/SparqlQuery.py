@@ -4,7 +4,7 @@ from SPARQLWrapper import SPARQLWrapper, JSON
 class SparqlQuery(object):
     """SPARQL methods"""
 
-    def __init__(self, endpoint, prefix, prefixes):
+    def __init__(self, endpoint, prefix):
         """Init
 
         Parameters
@@ -18,7 +18,18 @@ class SparqlQuery(object):
         """
         self.endpoint = endpoint
         self.prefix = prefix
-        self.prefixes = prefixes
+        self.prefixes = {
+            "owl:": "http://www.w3.org/2002/07/owl#",
+            "rdf:": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+            "rdfs:": "http://www.w3.org/2000/01/rdf-schema#",
+            "dc:": "http://purl.org/dc/elements/1.1/",
+            "prov:": "http://www.w3.org/ns/prov#",
+            "xsd:": "http://www.w3.org/2001/XMLSchema#",
+            "skos:": "http://www.w3.org/2004/02/skos/core#",
+            "chebi:": "http://purl.obolibrary.org/obo/",
+            "drugbankdrugs:": "http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugs/",
+            ":": self.prefix
+        }
 
     def get_sparl_prefix(self):
         """Get a SPARQL prefix string
