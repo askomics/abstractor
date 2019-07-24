@@ -1,10 +1,12 @@
+#! /usr/bin/python3
+
 import argparse
 import json
 import textwrap
-from libabstractor.SparqlQuery import SparqlQuery
+from abstractor.libabstractor.SparqlQuery import SparqlQuery
 
 
-class Abstractor():
+class Abstractor(object):
     """Abstractor main class"""
 
     def __init__(self):

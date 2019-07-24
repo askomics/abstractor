@@ -1,7 +1,7 @@
 from SPARQLWrapper import SPARQLWrapper, JSON
 
 
-class SparqlQuery():
+class SparqlQuery(object):
     """SPARQL methods"""
 
     def __init__(self, endpoint, prefix, prefixes):
