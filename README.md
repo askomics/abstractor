@@ -4,7 +4,7 @@ Abstraction generator: Generate AskOmics abstraction from a distant endpoint
 
 ## Installation
 
-### With pip (not yet available)
+### With pip
 
 Create and activate a python virtual environment
 
