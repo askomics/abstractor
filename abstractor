@@ -130,6 +130,7 @@ class Abstractor(object):
                     <{}> a :entity ,
                             :startPoint ,
                             owl:Class ;
+                            :instancesHaveNoLabels true ;
                         rdfs:label "{}" .
                     '''.format(
                         entity,
