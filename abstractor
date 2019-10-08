@@ -16,7 +16,8 @@ class Abstractor(object):
         parser = argparse.ArgumentParser(description="Generate AskOmics abstraction from a SPARQL endpoint")
 
         parser.add_argument("-e", "--endpoint", type=str, help="SPARQL enpoint url", required=True)
-        parser.add_argument("-p", "--prefix", type=str, help="SPARQL prefix uri for :", required=True)
+        parser.add_argument("-p", "--endpoint-prefix", type=str, help="Endpoint prefix", required=True)
+        parser.add_argument("--askomics-prefix", type=str, help="AskOmics prefix", default="http://www.semanticweb.org/user/ontologies/2018/1#")
         parser.add_argument("-o", "--output", type=str, help="Output ttl file", default="abstraction.ttl")
 
         self.args = parser.parse_args()
@@ -29,7 +30,7 @@ class Abstractor(object):
         list, list
             header and results
         """
-        sparql = SparqlQuery(self.args.endpoint, self.args.prefix)
+        sparql = SparqlQuery(self.args.endpoint, self.args.askomics_prefix)
 
         query = textwrap.dedent('''
         SELECT DISTINCT ?entity ?rel ?valueType
@@ -55,7 +56,7 @@ class Abstractor(object):
         list, list
             header and results
         """
-        sparql = SparqlQuery(self.args.endpoint, self.args.prefix)
+        sparql = SparqlQuery(self.args.endpoint, self.args.askomics_prefix)
 
         query = textwrap.dedent('''
         SELECT DISTINCT ?entity ?attr
@@ -79,7 +80,7 @@ class Abstractor(object):
         list, list
             header and results
         """
-        sparql = SparqlQuery(self.args.endpoint, self.args.prefix)
+        sparql = SparqlQuery(self.args.endpoint, self.args.askomics_prefix)
 
         query = textwrap.dedent('''
         SELECT DISTINCT ?entity ?attr
@@ -98,7 +99,7 @@ class Abstractor(object):
 
     def main(self):
         """main"""
-        sparql = SparqlQuery(self.args.endpoint, self.args.prefix)
+        sparql = SparqlQuery(self.args.endpoint, self.args.askomics_prefix)
 
         with open(self.args.output, "w") as file:
 
@@ -119,7 +120,7 @@ class Abstractor(object):
                 relation = result["rel"] if "rel" in result else None
                 relation_range = result["valueType"] if "valueType" in result else None
 
-                if not entity.startswith(self.args.prefix):
+                if not entity.startswith(self.args.endpoint_prefix):
                     continue
 
                 # Write ttl for entities
@@ -137,7 +138,7 @@ class Abstractor(object):
 
                     file.write(ttl)
 
-                if not relation.startswith(self.args.prefix):
+                if not relation.startswith(self.args.endpoint_prefix):
                     continue
 
                 # write ttl for relations
@@ -168,7 +169,7 @@ class Abstractor(object):
                 entity = result["entity"]
                 attribute = result["attr"] if "attr" in result else None
 
-                if not entity.startswith(self.args.prefix) and attribute.startswith(self.args.prefix):
+                if not entity.startswith(self.args.endpoint_prefix) and attribute.startswith(self.args.endpoint_prefix):
                     continue
 
                 if attribute:
@@ -195,7 +196,7 @@ class Abstractor(object):
                 entity = result["entity"]
                 attribute = result["attr"] if "attr" in result else None
 
-                if not entity.startswith(self.args.prefix) and attribute.startswith(self.args.prefix):
+                if not entity.startswith(self.args.endpoint_prefix) and attribute.startswith(self.args.endpoint_prefix):
                     continue
 
                 if attribute:

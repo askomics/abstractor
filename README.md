@@ -27,7 +27,7 @@ First, clone the git repo
 
 ```bash
 # clone
-git clone https://github.com/xgaia/abstractor.git
+git clone https://github.com/askomics/abstractor.git
 # cd
 cd abstractor
 ```
@@ -70,4 +70,4 @@ abstractor -e <endpoint_url> -p <entity_prefix> -o <output_file>
 abstractor -e "https://sparql.nextprot.org" -p "http://nextprot.org/rdf#" -o "abstraction.ttl"
 ```
 
-Obtained TTL file can be used with [AskOmics](https://github.com/xgaia/flaskomics)
+Obtained TTL file can be used with [AskOmics](https://github.com/askomics/flaskomics)
