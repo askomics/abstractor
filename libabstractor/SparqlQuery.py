@@ -126,18 +126,3 @@ class SparqlQuery(object):
             Parsed results
         """
         return self.parse_results(self.execute_query(query))
-
-    def get_label(self, uri):
-        """Get a label from an URI
-
-        Parameters
-        ----------
-        uri : string
-            URi to get a label
-
-        Returns
-        -------
-        string
-            Label
-        """
-        return uri.split("/")[-1].split("#")[-1]
