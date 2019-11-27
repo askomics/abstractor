@@ -59,7 +59,6 @@ abstractor -h
 ### General usage
 
 ```bash
-# Get help
 abstractor -e <endpoint_url> -p <entity_prefix> -o <output_file>
 ```
 
@@ -67,7 +66,7 @@ abstractor -e <endpoint_url> -p <entity_prefix> -o <output_file>
 
 ```bash
 # Get help
-abstractor -e "https://sparql.nextprot.org" -p "http://nextprot.org/rdf#" -o "abstraction.ttl"
+abstractor -e "https://sparql.nextprot.org" -p "http://nextprot.org/rdf#" -n nextprot -o "abstraction.ttl"
 ```
 
 Obtained TTL file can be used with [AskOmics](https://github.com/askomics/flaskomics)
