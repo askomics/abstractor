@@ -1,4 +1,5 @@
 import rdflib
+import re
 
 
 class RdfGraph(object):
@@ -113,8 +114,7 @@ class RdfGraph(object):
                 self.graph.add((rdflib.URIRef(attribute), rdflib.RDFS.domain, rdflib.URIRef(entity)))
                 self.graph.add((rdflib.URIRef(attribute), rdflib.RDFS.range, rdflib.XSD.string))
 
-    @staticmethod
-    def get_label(uri):
+    def get_label(self, uri):
         """Get a label from an URI
 
         Parameters
@@ -127,4 +127,25 @@ class RdfGraph(object):
         string
             Label
         """
-        return uri.split("/")[-1].split("#")[-1]
+        return self.uncamel(uri.split("/")[-1].split("#")[-1].replace("_", " "))
+
+    @staticmethod
+    def uncamel(string):
+        """Insert space beween camelcased words
+
+        Parameters
+        ----------
+        string : str
+            CamelCased string
+
+        Returns
+        -------
+        str
+            Uncamel Cased string
+        """
+        re_outer = re.compile(r'([^A-Z ])([A-Z])')
+        re_inner = re.compile(r'\b[A-Z]+(?=[A-Z][a-z])')
+        uncameled = re_inner.sub(r'\g<0> ', re_outer.sub(r'\1 \2', string))
+        if uncameled[0].islower():
+            return uncameled.lower()
+        return uncameled

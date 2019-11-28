@@ -74,7 +74,7 @@ class SparqlQuery(object):
         """
         endpoint = SPARQLWrapper(self.endpoint)
         prefixed_query = self.get_sparl_prefix() + query
-        # print(prefixed_query)
+        print(prefixed_query)
         endpoint.setQuery(prefixed_query)
 
         endpoint.setReturnFormat(JSON)

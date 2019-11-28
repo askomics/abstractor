@@ -22,6 +22,7 @@ class Abstractor(object):
         parser.add_argument("--askomics-prefix", type=str, help="AskOmics prefix", default="http://www.semanticweb.org/user/ontologies/2018/1#")
         parser.add_argument("-o", "--output", type=str, help="Output file", default="abstraction.ttl")
         parser.add_argument("-f", "--output-format", type=str, help="RDF format", default="turtle")
+        parser.add_argument("--owl", default=False, action='store_true', help="Use OWL ontology")
 
         self.args = parser.parse_args()
 
@@ -33,9 +34,19 @@ class Abstractor(object):
 
         rdf = RdfGraph(self.args.askomics_prefix, self.args.endpoint_prefix, self.args.name)
 
-        rdf.add_entities_and_relations(sparql.process_query(library.entities_and_relations))
-        rdf.add_decimal_attributes(sparql.process_query(library.entities_and_numeric_attributes))
-        rdf.add_text_attributes(sparql.process_query(library.entities_and_text_attributes))
+        # Use owl ontology
+        if self.args.owl:
+            result = sparql.process_query(library.ontologies)
+            for res in result:
+                rdf.add_entities_and_relations(sparql.process_query(library.entities_and_relations_with_ontology(res["ontology"])))
+                rdf.add_decimal_attributes(sparql.process_query(library.entities_and_numeric_attributes_with_ontology(res["ontology"])))
+                rdf.add_text_attributes(sparql.process_query(library.entities_and_text_attributes_with_ontology(res["ontology"])))
+
+        # All relations
+        else:
+            rdf.add_entities_and_relations(sparql.process_query(library.entities_and_relations))
+            rdf.add_decimal_attributes(sparql.process_query(library.entities_and_numeric_attributes))
+            rdf.add_text_attributes(sparql.process_query(library.entities_and_text_attributes))
 
         rdf.graph.serialize(destination=self.args.output, format=self.args.output_format, encoding="utf-8" if self.args.output_format == "turtle" else None)
 
