@@ -1,9 +1,9 @@
 #! /usr/bin/python3
 
 import argparse
-import rdflib
-import textwrap
 from libabstractor.SparqlQuery import SparqlQuery
+from libabstractor.QueryLibrary import QueryLibrary
+from libabstractor.RdfGraph import RdfGraph
 
 
 class Abstractor(object):
@@ -16,184 +16,39 @@ class Abstractor(object):
         """
         parser = argparse.ArgumentParser(description="Generate AskOmics abstraction from a SPARQL endpoint")
 
-        parser.add_argument("-e", "--endpoint", type=str, help="SPARQL enpoint url", required=True)
-        parser.add_argument("-n", "--name", type=str, help="Endpoint prefix short name", default="external")
-        parser.add_argument("-p", "--endpoint-prefix", type=str, help="Endpoint prefix url", required=True)
+        parser.add_argument("-s", "--source", type=str, help="RDF data source (SPARQL endpoint url or path to RDF file)", required=True)
+        parser.add_argument("-t", "--source-type", choices=['sparql', 'xml', 'turtle', 'nt'], help="Source format", default="sparql")
+
         parser.add_argument("--askomics-prefix", type=str, help="AskOmics prefix", default="http://www.semanticweb.org/user/ontologies/2018/1#")
-        parser.add_argument("-o", "--output", type=str, help="Output file", default="abstraction.ttl")
-        parser.add_argument("-f", "--output-format", type=str, help="RDF format", default="turtle")
+
+        parser.add_argument("-o", "--output", type=str, help="Output file", default="abstraction.rdf")
+        parser.add_argument("-f", "--output-format", choices=['xml', 'turtle', 'nt'], help="RDF format", default="turtle")
+        parser.add_argument("--owl", default=False, action='store_true', help="Use OWL ontology")
 
         self.args = parser.parse_args()
 
-    def get_entities_and_relations(self):
-        """Get all entities and relations
-
-        Returns
-        -------
-        list, list
-            header and results
-        """
-        sparql = SparqlQuery(self.args.endpoint, self.args.askomics_prefix)
-
-        query = textwrap.dedent('''
-        SELECT DISTINCT ?source_entity ?relation ?target_entity
-        WHERE {
-            # Get entities
-            ?instance_of_source a ?source_entity .
-            ?instance_of_target a ?target_entity .
-            # Relations
-            ?instance_of_source ?relation ?instance_of_target .
-        }
-        ''')
-
-        return sparql.process_query(query)
-
-    def get_entities_and_numeric_attributes(self):
-        """Get all entities and numeric attributes
-
-        Returns
-        -------
-        list, list
-            header and results
-        """
-        sparql = SparqlQuery(self.args.endpoint, self.args.askomics_prefix)
-
-        query = textwrap.dedent('''
-        SELECT DISTINCT ?entity ?attribute
-        WHERE {
-            # Get entities
-            ?instance_of_entity a ?entity .
-            # Attributes
-            ?instance_of_entity ?attribute ?value .
-            FILTER (isNumeric(?value))
-        }
-        ''')
-
-        return sparql.process_query(query)
-
-    def get_entities_and_text_attributes(self):
-        """Get all entities and text attributes
-
-        Returns
-        -------
-        list, list
-            header and results
-        """
-        sparql = SparqlQuery(self.args.endpoint, self.args.askomics_prefix)
-
-        query = textwrap.dedent('''
-        SELECT DISTINCT ?entity ?attribute
-        WHERE {
-            # Get entities
-            ?instance_of_entity a ?entity .
-            # Attributes
-            ?instance_of_entity ?attribute ?value .
-            FILTER (isLiteral(?value))
-            FILTER (!isNumeric(?value))
-        }
-        ''')
-
-        return sparql.process_query(query)
-
     def main(self):
         """main"""
-        sparql = SparqlQuery(self.args.endpoint, self.args.askomics_prefix)
+        sparql = SparqlQuery(self.args.source, self.args.source_type, self.args.askomics_prefix)
+        library = QueryLibrary()
 
-        # launch query
-        try:
-            result_entities = self.get_entities_and_relations()
-        except Exception as e:
-            raise e
+        rdf = RdfGraph(self.args.askomics_prefix)
 
-        entities = []
+        # Use owl ontology
+        if self.args.owl:
+            result = sparql.process_query(library.ontologies)
+            for res in result:
+                rdf.add_entities_and_relations(sparql.process_query(library.entities_and_relations_with_ontology(res["ontology"])))
+                rdf.add_decimal_attributes(sparql.process_query(library.entities_and_numeric_attributes_with_ontology(res["ontology"])))
+                rdf.add_text_attributes(sparql.process_query(library.entities_and_text_attributes_with_ontology(res["ontology"])))
 
-        # RDF graphs
-        gprefix = rdflib.namespace.Namespace(self.args.askomics_prefix)
+        # All relations
+        else:
+            rdf.add_entities_and_relations(sparql.process_query(library.entities_and_relations))
+            rdf.add_decimal_attributes(sparql.process_query(library.entities_and_numeric_attributes))
+            rdf.add_text_attributes(sparql.process_query(library.entities_and_text_attributes))
 
-        gentities = rdflib.Graph()
-        gentities.bind('', self.args.askomics_prefix)
-        gentities.bind(self.args.name, self.args.endpoint_prefix)
-
-        grelations = rdflib.Graph()
-        grelations.bind('', self.args.askomics_prefix)
-        grelations.bind(self.args.name, self.args.endpoint_prefix)
-
-        gattributes = rdflib.Graph()
-        gattributes.bind('', self.args.askomics_prefix)
-        gattributes.bind(self.args.name, self.args.endpoint_prefix)
-
-        # Entities and relations
-        for result in result_entities:
-            source_entity = result["source_entity"]
-            target_entity = result["target_entity"]
-            relation = result["relation"]
-
-            # Source entity
-            if source_entity.startswith(self.args.endpoint_prefix) and source_entity not in entities:
-                entities.append(source_entity)
-                gentities.add((rdflib.URIRef(source_entity), rdflib.RDF.type, gprefix["entity"]))
-                gentities.add((rdflib.URIRef(source_entity), rdflib.RDF.type, gprefix["startPoint"]))
-                gentities.add((rdflib.URIRef(source_entity), rdflib.RDF.type, rdflib.OWL.Class))
-                gentities.add((rdflib.URIRef(source_entity), gprefix["instancesHaveNoLabels"], rdflib.Literal(True)))
-                gentities.add((rdflib.URIRef(source_entity), rdflib.RDFS.label, rdflib.Literal(sparql.get_label(source_entity))))
-
-            # Target entity
-            if target_entity.startswith(self.args.endpoint_prefix) and target_entity not in entities:
-                entities.append(target_entity)
-                gentities.add((rdflib.URIRef(target_entity), rdflib.RDF.type, gprefix["entity"]))
-                gentities.add((rdflib.URIRef(target_entity), rdflib.RDF.type, gprefix["startPoint"]))
-                gentities.add((rdflib.URIRef(target_entity), rdflib.RDF.type, rdflib.OWL.Class))
-                gentities.add((rdflib.URIRef(target_entity), gprefix["instancesHaveNoLabels"], rdflib.Literal(True)))
-                gentities.add((rdflib.URIRef(target_entity), rdflib.RDFS.label, rdflib.Literal(sparql.get_label(target_entity))))
-
-            # Relation
-            if relation.startswith(self.args.endpoint_prefix):
-                grelations.add((rdflib.URIRef(relation), rdflib.RDF.type, rdflib.OWL.ObjectProperty))
-                grelations.add((rdflib.URIRef(relation), rdflib.RDF.type, gprefix["AskomicsRelation"]))
-                grelations.add((rdflib.URIRef(relation), rdflib.RDFS.label, rdflib.Literal(sparql.get_label(relation))))
-                grelations.add((rdflib.URIRef(relation), rdflib.RDFS.domain, rdflib.URIRef(source_entity)))
-                grelations.add((rdflib.URIRef(relation), rdflib.RDFS.range, rdflib.URIRef(target_entity)))
-
-        # launch query
-        try:
-            result_numeric_attr = self.get_entities_and_numeric_attributes()
-        except Exception as e:
-            raise e
-
-        # Numeric attributes
-        for result in result_numeric_attr:
-            entity = result["entity"]
-            attribute = result["attribute"]
-
-            if not entity.startswith(self.args.endpoint_prefix) or not attribute.startswith(self.args.endpoint_prefix):
-                continue
-
-            gattributes.add((rdflib.URIRef(attribute), rdflib.RDF.type, rdflib.OWL.DatatypeProperty))
-            gattributes.add((rdflib.URIRef(attribute), rdflib.RDFS.label, rdflib.Literal(sparql.get_label(attribute))))
-            gattributes.add((rdflib.URIRef(attribute), rdflib.RDFS.domain, rdflib.URIRef(entity)))
-            gattributes.add((rdflib.URIRef(attribute), rdflib.RDFS.range, rdflib.XSD.decimal))
-
-        # launch query
-        try:
-            result_text_attr = self.get_entities_and_text_attributes()
-        except Exception as e:
-            raise e
-
-        for result in result_text_attr:
-            entity = result["entity"]
-            attribute = result["attribute"]
-
-            if not entity.startswith(self.args.endpoint_prefix) or not attribute.startswith(self.args.endpoint_prefix):
-                continue
-
-            gattributes.add((rdflib.URIRef(attribute), rdflib.RDF.type, rdflib.OWL.DatatypeProperty))
-            gattributes.add((rdflib.URIRef(attribute), rdflib.RDFS.label, rdflib.Literal(sparql.get_label(attribute))))
-            gattributes.add((rdflib.URIRef(attribute), rdflib.RDFS.domain, rdflib.URIRef(entity)))
-            gattributes.add((rdflib.URIRef(attribute), rdflib.RDFS.range, rdflib.XSD.string))
-
-        # Serialize
-        full_graph = gentities + grelations + gattributes
-        full_graph.serialize(destination=self.args.output, format=self.args.output_format, encoding="utf-8" if self.args.output_format == "turtle" else None)
+        rdf.graph.serialize(destination=self.args.output, format=self.args.output_format, encoding="utf-8" if self.args.output_format == "turtle" else None)
 
 
 if __name__ == '__main__':
