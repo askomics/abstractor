@@ -109,16 +109,9 @@ class QueryLibrary(object):
             ?target_entity a owl:Class .
             ?target_entity rdfs:isDefinedBy <{ontology}> .
 
-            ?instance_of_source a ?source_entity .
-            ?instance_of_target a ?target_entity .
-            # Relations
-            ?instance_of_source ?relation ?instance_of_target .
-
-            #OPTIONAL {{ ?source_entity rdfs:label ?label_source }}
-            #OPTIONAL {{ ?target_entity rdfs:label ?label_target }}
-            #?relation a owl:ObjectProperty .
-            #?relation rdfs:range ?source_entity .
-            #?relation rdfs:domain ?target_entity .
+            ?relation a owl:ObjectProperty .
+            ?relation rdfs:domain ?source_entity .
+            ?relation rdfs:range ?target_entity .
         }}
         '''.format(ontology=ontology))
 
@@ -137,18 +130,11 @@ class QueryLibrary(object):
             # Entity
             ?entity a owl:Class .
             ?entity rdfs:isDefinedBy <{ontology}> .
-
-            # Attributes
-            ?instance_of_entity a ?entity .
-            ?instance_of_entity ?attribute ?value .
-            FILTER (isNumeric(?value)) .
-
-
-            #?attribute a owl:DatatypeProperty .
-            #?attribute rdfs:domain ?entity .
-            #?attribute rdfs:range ?range .
-            #VALUES ?range {{ xsd:float xsd:int }} .
-            FILTER (! isBlank(?entity)) .
+            # Attribute
+            ?attribute a owl:DatatypeProperty .
+            ?attribute rdfs:domain ?entity .
+            ?attribute rdfs:range ?range .
+            VALUES ?range {{ xsd:float xsd:int }} .
         }}
         '''.format(ontology=ontology))
 
@@ -164,17 +150,13 @@ class QueryLibrary(object):
         return textwrap.dedent('''
         SELECT DISTINCT ?entity ?attribute
         WHERE {{
+            # Entity
             ?entity a owl:Class .
             ?entity rdfs:isDefinedBy <{ontology}> .
-
-            ?instance_of_entity a ?entity .
-            ?instance_of_entity ?attribute ?value .
-            FILTER (isNumeric(?value)) .
-
-            #?attribute a owl:DatatypeProperty .
-            #?attribute rdfs:domain ?entity .
-            #?attribute rdfs:range ?range .
-            #VALUES ?range {{ xsd:string }} .
-            FILTER (! isBlank(?entity)) .
+            # Attribute
+            ?attribute a owl:DatatypeProperty .
+            ?attribute rdfs:domain ?entity .
+            ?attribute rdfs:range ?range .
+            VALUES ?range {{ xsd:string }} .
         }}
         '''.format(ontology=ontology))

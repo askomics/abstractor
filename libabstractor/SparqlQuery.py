@@ -1,22 +1,38 @@
+import rdflib
 from SPARQLWrapper import SPARQLWrapper, JSON
 
 
 class SparqlQuery(object):
-    """SPARQL methods"""
+    """SPARQL methods
 
-    def __init__(self, endpoint, prefix):
+    Attributes
+    ----------
+    prefix : TYPE
+        Description
+    prefixes : TYPE
+        Description
+    rdf_source : TYPE
+        Description
+    source : TYPE
+        Description
+    source_type : TYPE
+        Description
+    """
+
+    def __init__(self, source, source_type, prefix):
         """Init
 
         Parameters
         ----------
-        endpoint : string
-            SPARQL endpoint url
+        source : TYPE
+            Description
+        source_type : TYPE
+            Description
         prefix : string
-            Prefix URI :
-        prefixes : dict
-            Common prefixes
+            Prefix URI
         """
-        self.endpoint = endpoint
+        self.source = source
+        self.source_type = source_type
         self.prefix = prefix
         self.prefixes = {
             "owl:": "http://www.w3.org/2002/07/owl#",
@@ -28,8 +44,14 @@ class SparqlQuery(object):
             "skos:": "http://www.w3.org/2004/02/skos/core#",
             "chebi:": "http://purl.obolibrary.org/obo/",
             "drugbankdrugs:": "http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugs/",
-            ":": self.prefix
+            "askomics:": self.prefix
         }
+
+        # if source is a file, load it in a rdflib graph
+        self.rdf_source = None
+        if self.source_type != "sparql":
+            self.rdf_source = rdflib.Graph()
+            self.rdf_source.parse(self.source, format=self.source_type)
 
     def get_sparl_prefix(self):
         """Get a SPARQL prefix string
@@ -59,33 +81,40 @@ class SparqlQuery(object):
 
         return prefixes_string
 
-    def execute_query(self, query):
-        """Execute a sparql query
+    def execute_sparql_query(self, query):
+        """Execute query on a SPARQL endpoint
 
         Parameters
         ----------
-        query : string
-            Query to perform
+        query : str
+            The query
 
         Returns
         -------
-        TYPE
-            result
+        list
+            results
         """
-        endpoint = SPARQLWrapper(self.endpoint)
-        prefixed_query = self.get_sparl_prefix() + query
-        print(prefixed_query)
-        endpoint.setQuery(prefixed_query)
-
+        endpoint = SPARQLWrapper(self.source)
+        endpoint.setQuery(query)
         endpoint.setReturnFormat(JSON)
-        try:
-            results = endpoint.query().convert()
-        except Exception as e:
-            raise e
+        return endpoint.query().convert()
 
-        return results
+    def execute_rdflib_query(self, query):
+        """Execute query on a rdflib graph
 
-    def parse_results(self, json_results):
+        Parameters
+        ----------
+        query : str
+            The query
+
+        Returns
+        -------
+        list
+            results
+        """
+        return self.rdf_source.query(query)
+
+    def parse_sparql_results(self, json_results):
         """Parse result of sparql query
 
         Parameters
@@ -112,6 +141,29 @@ class SparqlQuery(object):
 
         return data
 
+    def parse_rdflib_results(self, results):
+        """Parse result of sparql query (rdflib)
+
+        Parameters
+        ----------
+        json_results : dict
+            Query result
+
+        Returns
+        -------
+        list
+            Parsed results
+        """
+        variables = [str(v) for v in results.vars]
+        data = []
+        for row in results:
+            row_dict = {}
+            for v in variables:
+                row_dict[v] = str(row[v])
+            data.append(row_dict)
+
+        return data
+
     def process_query(self, query):
         """Execute a query and return parsed results
 
@@ -125,4 +177,9 @@ class SparqlQuery(object):
         list
             Parsed results
         """
-        return self.parse_results(self.execute_query(query))
+        # prefixed_query = self.get_sparl_prefix() + query
+        # print(query)
+        if self.source_type == "sparql":
+            return self.parse_sparql_results(self.execute_sparql_query(query))
+        else:
+            return self.parse_rdflib_results(self.execute_rdflib_query(query))

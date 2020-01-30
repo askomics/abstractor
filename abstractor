@@ -16,23 +16,23 @@ class Abstractor(object):
         """
         parser = argparse.ArgumentParser(description="Generate AskOmics abstraction from a SPARQL endpoint")
 
-        parser.add_argument("-e", "--endpoint", type=str, help="SPARQL enpoint url", required=True)
-        parser.add_argument("-n", "--name", type=str, help="Endpoint prefix short name", default="external")
-        parser.add_argument("-p", "--endpoint-prefix", type=str, help="Endpoint prefix url", required=True)
+        parser.add_argument("-s", "--source", type=str, help="RDF data source (SPARQL endpoint url or path to RDF file)", required=True)
+        parser.add_argument("-t", "--source-type", choices=['sparql', 'xml', 'turtle', 'nt'], help="Source format", default="sparql")
+
         parser.add_argument("--askomics-prefix", type=str, help="AskOmics prefix", default="http://www.semanticweb.org/user/ontologies/2018/1#")
-        parser.add_argument("-o", "--output", type=str, help="Output file", default="abstraction.ttl")
-        parser.add_argument("-f", "--output-format", type=str, help="RDF format", default="turtle")
+
+        parser.add_argument("-o", "--output", type=str, help="Output file", default="abstraction.rdf")
+        parser.add_argument("-f", "--output-format", choices=['xml', 'turtle', 'nt'], help="RDF format", default="turtle")
         parser.add_argument("--owl", default=False, action='store_true', help="Use OWL ontology")
 
         self.args = parser.parse_args()
 
     def main(self):
         """main"""
-        sparql = SparqlQuery(self.args.endpoint, self.args.askomics_prefix)
-
+        sparql = SparqlQuery(self.args.source, self.args.source_type, self.args.askomics_prefix)
         library = QueryLibrary()
 
-        rdf = RdfGraph(self.args.askomics_prefix, self.args.endpoint_prefix, self.args.name)
+        rdf = RdfGraph(self.args.askomics_prefix)
 
         # Use owl ontology
         if self.args.owl:

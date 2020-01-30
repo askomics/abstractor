@@ -1,6 +1,6 @@
 # Abstractor
 
-Abstraction generator: Generate AskOmics abstraction from a distant endpoint
+Abstraction generator: Generate AskOmics abstraction from a distant SPARQL endpoint or a RDF file
 
 ## Installation
 
@@ -58,15 +58,30 @@ abstractor -h
 
 ### General usage
 
+Use `abstractor --help` to get all available options.
+
+#### With a SPARQL endpoint
+
 ```bash
-abstractor -e <endpoint_url> -p <entity_prefix> -o <output_file>
+abstractor -s <endpoint_url> -o <output_file>
 ```
 
-### Example with NeXtProt
+Example with [NeXtProt](https://sparql.nextprot.org):
 
 ```bash
-# Get help
-abstractor -e "https://sparql.nextprot.org" -p "http://nextprot.org/rdf#" -n nextprot -o "abstraction.ttl"
+abstractor -s https://sparql.nextprot.org -o nextprot_abstraction.ttl
+```
+
+#### With a RDF file
+
+```bash
+abstractor -s <path> -t <type> -o <output_file>
+```
+
+Example with a file `data.rdf`. Input and output file in xml format.
+
+```bash
+abstractor -s ~/me/data.xml -t xml -o data_abstraction.xml -f xml
 ```
 
 Obtained TTL file can be used with [AskOmics](https://github.com/askomics/flaskomics)
