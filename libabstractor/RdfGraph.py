@@ -13,18 +13,19 @@ class RdfGraph(object):
         The RDF graph
     """
 
-    def __init__(self, askomics_prefix):
+    def __init__(self, namespace_internal):
         """init
 
         Parameters
         ----------
-        askomics_prefix : str
-            AskOmics prefix
+        namespace_internal : str
+            AskOmics internal namespace
         """
-        self.gprefix = rdflib.namespace.Namespace(askomics_prefix)
+        self.namespace_internal = rdflib.namespace.Namespace(namespace_internal)
         self.graph = rdflib.Graph()
 
-        self.graph.bind('askomics', askomics_prefix)
+        self.graph.bind('askomics', namespace_internal)
+        self.prov = rdflib.Namespace('http://www.w3.org/ns/prov#')
 
     def check_entity(self, entity):
         """Check if entity is correct (not rdf rdfs owl or virtuoso thing)
@@ -39,7 +40,7 @@ class RdfGraph(object):
         bool
             True if entity is a true one
         """
-        excluded_prefixes = (
+        excluded_namespaces = (
             "http://www.w3.org/2002/07/owl#",
             "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
             "http://www.w3.org/2000/01/rdf-schema#",
@@ -47,9 +48,19 @@ class RdfGraph(object):
             "http://www.w3.org/ns/sparql-service-description#"
         )
 
-        if entity.lower().startswith(excluded_prefixes):
+        if entity.lower().startswith(excluded_namespaces):
             return False
         return True
+
+    def add_location(self, location):
+        """Add location of the data
+
+        Parameters
+        ----------
+        location : str
+            URL of distant endpoint
+        """
+        self.graph.add((rdflib.BNode("graph"), self.prov.atLocation, rdflib.Literal(location)))
 
     def add_entities_and_relations(self, sparql_result):
         """Add entities and relation in the rdf graph
@@ -70,25 +81,25 @@ class RdfGraph(object):
             # Source entity
             if self.check_entity(source_entity) and source_entity not in entities:
                 entities.append(source_entity)
-                self.graph.add((rdflib.URIRef(source_entity), rdflib.RDF.type, self.gprefix["entity"]))
-                self.graph.add((rdflib.URIRef(source_entity), rdflib.RDF.type, self.gprefix["startPoint"]))
+                self.graph.add((rdflib.URIRef(source_entity), rdflib.RDF.type, self.namespace_internal["entity"]))
+                self.graph.add((rdflib.URIRef(source_entity), rdflib.RDF.type, self.namespace_internal["startPoint"]))
                 self.graph.add((rdflib.URIRef(source_entity), rdflib.RDF.type, rdflib.OWL.Class))
-                self.graph.add((rdflib.URIRef(source_entity), self.gprefix["instancesHaveNoLabels"], rdflib.Literal(True)))
+                self.graph.add((rdflib.URIRef(source_entity), self.namespace_internal["instancesHaveNoLabels"], rdflib.Literal(True)))
                 self.graph.add((rdflib.URIRef(source_entity), rdflib.RDFS.label, rdflib.Literal(self.get_label(source_entity))))
 
             # Target entity
             if self.check_entity(target_entity) and target_entity not in entities:
                 entities.append(target_entity)
-                self.graph.add((rdflib.URIRef(target_entity), rdflib.RDF.type, self.gprefix["entity"]))
-                self.graph.add((rdflib.URIRef(target_entity), rdflib.RDF.type, self.gprefix["startPoint"]))
+                self.graph.add((rdflib.URIRef(target_entity), rdflib.RDF.type, self.namespace_internal["entity"]))
+                self.graph.add((rdflib.URIRef(target_entity), rdflib.RDF.type, self.namespace_internal["startPoint"]))
                 self.graph.add((rdflib.URIRef(target_entity), rdflib.RDF.type, rdflib.OWL.Class))
-                self.graph.add((rdflib.URIRef(target_entity), self.gprefix["instancesHaveNoLabels"], rdflib.Literal(True)))
+                self.graph.add((rdflib.URIRef(target_entity), self.namespace_internal["instancesHaveNoLabels"], rdflib.Literal(True)))
                 self.graph.add((rdflib.URIRef(target_entity), rdflib.RDFS.label, rdflib.Literal(self.get_label(target_entity))))
 
             # Relation
             if self.check_entity(relation):
                 self.graph.add((rdflib.URIRef(relation), rdflib.RDF.type, rdflib.OWL.ObjectProperty))
-                self.graph.add((rdflib.URIRef(relation), rdflib.RDF.type, self.gprefix["AskomicsRelation"]))
+                self.graph.add((rdflib.URIRef(relation), rdflib.RDF.type, self.namespace_internal["AskomicsRelation"]))
                 self.graph.add((rdflib.URIRef(relation), rdflib.RDFS.label, rdflib.Literal(self.get_label(relation))))
                 self.graph.add((rdflib.URIRef(relation), rdflib.RDFS.domain, rdflib.URIRef(source_entity)))
                 self.graph.add((rdflib.URIRef(relation), rdflib.RDFS.range, rdflib.URIRef(target_entity)))
@@ -105,8 +116,7 @@ class RdfGraph(object):
             entity = result["entity"]
             attribute = result["attribute"]
 
-            if self.check_entity(entity) and self.check_entity(attribute):
-                """<FRESHLY_INSERTED>"""
+            if self.check_entity(entity):
                 self.graph.add((rdflib.URIRef(attribute), rdflib.RDF.type, rdflib.OWL.DatatypeProperty))
                 self.graph.add((rdflib.URIRef(attribute), rdflib.RDFS.label, rdflib.Literal(self.get_label(attribute))))
                 self.graph.add((rdflib.URIRef(attribute), rdflib.RDFS.domain, rdflib.URIRef(entity)))
@@ -124,12 +134,14 @@ class RdfGraph(object):
             entity = result["entity"]
             attribute = result["attribute"]
 
-            if self.check_entity(entity) and self.check_entity(attribute):
-
-                self.graph.add((rdflib.URIRef(attribute), rdflib.RDF.type, rdflib.OWL.DatatypeProperty))
-                self.graph.add((rdflib.URIRef(attribute), rdflib.RDFS.label, rdflib.Literal(self.get_label(attribute))))
-                self.graph.add((rdflib.URIRef(attribute), rdflib.RDFS.domain, rdflib.URIRef(entity)))
-                self.graph.add((rdflib.URIRef(attribute), rdflib.RDFS.range, rdflib.XSD.string))
+            if self.check_entity(entity):
+                if attribute == "http://www.w3.org/2000/01/rdf-schema#label":
+                    self.graph.remove((rdflib.URIRef(entity), self.namespace_internal["instancesHaveNoLabels"], rdflib.Literal(True)))
+                else:
+                    self.graph.add((rdflib.URIRef(attribute), rdflib.RDF.type, rdflib.OWL.DatatypeProperty))
+                    self.graph.add((rdflib.URIRef(attribute), rdflib.RDFS.label, rdflib.Literal(self.get_label(attribute))))
+                    self.graph.add((rdflib.URIRef(attribute), rdflib.RDFS.domain, rdflib.URIRef(entity)))
+                    self.graph.add((rdflib.URIRef(attribute), rdflib.RDFS.range, rdflib.XSD.string))
 
     def get_label(self, uri):
         """Get a label from an URI

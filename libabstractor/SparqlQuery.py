@@ -19,7 +19,7 @@ class SparqlQuery(object):
         Description
     """
 
-    def __init__(self, source, source_type, prefix):
+    def __init__(self, source, source_type):
         """Init
 
         Parameters
@@ -28,12 +28,9 @@ class SparqlQuery(object):
             Description
         source_type : TYPE
             Description
-        prefix : string
-            Prefix URI
         """
         self.source = source
         self.source_type = source_type
-        self.prefix = prefix
         self.prefixes = {
             "owl:": "http://www.w3.org/2002/07/owl#",
             "rdf:": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
@@ -43,8 +40,7 @@ class SparqlQuery(object):
             "xsd:": "http://www.w3.org/2001/XMLSchema#",
             "skos:": "http://www.w3.org/2004/02/skos/core#",
             "chebi:": "http://purl.obolibrary.org/obo/",
-            "drugbankdrugs:": "http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugs/",
-            "askomics:": self.prefix
+            "drugbankdrugs:": "http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugs/"
         }
 
         # if source is a file, load it in a rdflib graph

@@ -19,7 +19,7 @@ class Abstractor(object):
         parser.add_argument("-s", "--source", type=str, help="RDF data source (SPARQL endpoint url or path to RDF file)", required=True)
         parser.add_argument("-t", "--source-type", choices=['sparql', 'xml', 'turtle', 'nt'], help="Source format", default="sparql")
 
-        parser.add_argument("--askomics-prefix", type=str, help="AskOmics prefix", default="http://www.semanticweb.org/user/ontologies/2018/1#")
+        parser.add_argument("--askomics-internal-namespace", type=str, help="AskOmics internal namespace", default="http://askomics.org/internal/")
 
         parser.add_argument("-o", "--output", type=str, help="Output file", default="abstraction.rdf")
         parser.add_argument("-f", "--output-format", choices=['xml', 'turtle', 'nt'], help="RDF format", default="turtle")
@@ -29,10 +29,13 @@ class Abstractor(object):
 
     def main(self):
         """main"""
-        sparql = SparqlQuery(self.args.source, self.args.source_type, self.args.askomics_prefix)
+        sparql = SparqlQuery(self.args.source, self.args.source_type)
         library = QueryLibrary()
 
-        rdf = RdfGraph(self.args.askomics_prefix)
+        rdf = RdfGraph(self.args.askomics_internal_namespace)
+
+        if self.args.source_type == "sparql":
+            rdf.add_location(self.args.source)
 
         # Use owl ontology
         if self.args.owl:
