@@ -1,5 +1,6 @@
 #! /usr/bin/python3
 
+import logging
 import argparse
 from libabstractor.SparqlQuery import SparqlQuery
 from libabstractor.QueryLibrary import QueryLibrary
@@ -25,7 +26,21 @@ class Abstractor(object):
         parser.add_argument("-f", "--output-format", choices=['xml', 'turtle', 'nt'], help="RDF format", default="turtle")
         parser.add_argument("--owl", default=False, action='store_true', help="Use OWL ontology")
 
+        parser.add_argument("-v", "--verbosity", action="count", help="increase output verbosity")
+
         self.args = parser.parse_args()
+
+        logging_level = logging.CRITICAL
+        if self.args.verbosity == 1:
+            logging_level = logging.ERROR
+        if self.args.verbosity == 2:
+            logging_level = logging.WARNING
+        if self.args.verbosity == 3:
+            logging_level = logging.INFO
+        if self.args.verbosity > 3:
+            logging_level = logging.DEBUG
+
+        logging.basicConfig(level=logging_level)
 
     def main(self):
         """main"""
@@ -39,18 +54,27 @@ class Abstractor(object):
 
         # Use owl ontology
         if self.args.owl:
+            logging.debug("Use OWL Ontology")
             result = sparql.process_query(library.ontologies)
             for res in result:
+                logging.debug(res["ontology"])
+                logging.debug("Get entities and relation")
                 rdf.add_entities_and_relations(sparql.process_query(library.entities_and_relations_with_ontology(res["ontology"])))
+                logging.debug("Get decimal attributes")
                 rdf.add_decimal_attributes(sparql.process_query(library.entities_and_numeric_attributes_with_ontology(res["ontology"])))
+                logging.debug("Get text attributes")
                 rdf.add_text_attributes(sparql.process_query(library.entities_and_text_attributes_with_ontology(res["ontology"])))
 
         # All relations
         else:
+            logging.debug("Get entities and relation")
             rdf.add_entities_and_relations(sparql.process_query(library.entities_and_relations))
+            logging.debug("Get decimal attributes")
             rdf.add_decimal_attributes(sparql.process_query(library.entities_and_numeric_attributes))
+            logging.debug("Get text attributes")
             rdf.add_text_attributes(sparql.process_query(library.entities_and_text_attributes))
 
+        logging.debug("Write RDF ({}) into {}".format(self.args.output_format, self.args.output))
         rdf.graph.serialize(destination=self.args.output, format=self.args.output_format, encoding="utf-8" if self.args.output_format == "turtle" else None)
 
 

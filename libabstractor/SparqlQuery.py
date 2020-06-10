@@ -1,3 +1,4 @@
+import logging
 import rdflib
 from SPARQLWrapper import SPARQLWrapper, JSON
 
@@ -174,7 +175,7 @@ class SparqlQuery(object):
             Parsed results
         """
         # prefixed_query = self.get_sparl_prefix() + query
-        # print(query)
+        logging.debug(query)
         if self.source_type == "sparql":
             return self.parse_sparql_results(self.execute_sparql_query(query))
         else:
