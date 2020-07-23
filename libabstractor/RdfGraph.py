@@ -59,6 +59,58 @@ class RdfGraph(object):
         """
         self.graph.add((rdflib.BNode("graph"), self.prov.atLocation, rdflib.Literal(location)))
 
+    def add_entities(self, sparql_result):
+        """Add entities
+
+        Parameters
+        ----------
+        sparql_result : list
+            Sparql result
+        """
+        for result in sparql_result:
+            if self.check_entity(result["entity"]):
+                self.graph.add((rdflib.URIRef(result["entity"]), rdflib.RDF.type, self.namespace_internal["entity"]))
+                self.graph.add((rdflib.URIRef(result["entity"]), rdflib.RDF.type, self.namespace_internal["startPoint"]))
+                self.graph.add((rdflib.URIRef(result["entity"]), rdflib.RDF.type, rdflib.OWL.Class))
+                self.graph.add((rdflib.URIRef(result["entity"]), self.namespace_internal["instancesHaveNoLabels"], rdflib.Literal(True)))
+                self.graph.add((rdflib.URIRef(result["entity"]), rdflib.RDFS.label, rdflib.Literal(self.get_label(result["entity"]))))
+
+    def add_relation(self, source_entity, relation, target_entity):
+        """Add a relation
+
+        Parameters
+        ----------
+        source_entity : str
+            Source URI
+        relation : str
+            Relation URI
+        target_entity : str
+            Target URI
+        """
+        # Relation
+        if self.check_entity(relation):
+            self.graph.add((rdflib.URIRef(relation), rdflib.RDF.type, rdflib.OWL.ObjectProperty))
+            self.graph.add((rdflib.URIRef(relation), rdflib.RDF.type, self.namespace_internal["AskomicsRelation"]))
+            self.graph.add((rdflib.URIRef(relation), rdflib.RDFS.label, rdflib.Literal(self.get_label(relation))))
+            self.graph.add((rdflib.URIRef(relation), rdflib.RDFS.domain, rdflib.URIRef(source_entity)))
+            self.graph.add((rdflib.URIRef(relation), rdflib.RDFS.range, rdflib.URIRef(target_entity)))
+
+    def add_attribute(self, entity, attribute, decimal=True):
+        """Add attribute
+
+        Parameters
+        ----------
+        entity : str
+            Source URI
+        attribute : str
+            Attribue URI
+        """
+        if self.check_entity(entity):
+            self.graph.add((rdflib.URIRef(attribute), rdflib.RDF.type, rdflib.OWL.DatatypeProperty))
+            self.graph.add((rdflib.URIRef(attribute), rdflib.RDFS.label, rdflib.Literal(self.get_label(attribute))))
+            self.graph.add((rdflib.URIRef(attribute), rdflib.RDFS.domain, rdflib.URIRef(entity)))
+            self.graph.add((rdflib.URIRef(attribute), rdflib.RDFS.range, rdflib.XSD.decimal if decimal else rdflib.XSD.string))
+
     def add_entities_and_relations(self, sparql_result):
         """Add entities and relation in the rdf graph
 
