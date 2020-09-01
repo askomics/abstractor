@@ -68,7 +68,7 @@ class Abstractor(object):
             rdf.add_entities(entities)
             for entity_dict in entities:
                 entity = entity_dict["entity"]
-                if not entity.lower().startswith(("http://www.w3.org", "http://www.openlinksw.com")):
+                if rdf.check_entity(entity):
                     # relation
                     relations = sparql.process_query(library.get_relation_for_entity(entity))
                     for relation_dict in relations:

@@ -126,6 +126,8 @@ class RdfGraph(object):
             source_entity = result["source_entity"]
             target_entity = result["target_entity"]
             relation = result["relation"]
+            mother_source = result["mother_source"] if "mother_source" in result else None
+            mother_target = result["mother_target"] if "mother_target" in result else None
 
             # Source entity
             if self.check_entity(source_entity) and source_entity not in entities:
@@ -135,6 +137,8 @@ class RdfGraph(object):
                 self.graph.add((rdflib.URIRef(source_entity), rdflib.RDF.type, rdflib.OWL.Class))
                 self.graph.add((rdflib.URIRef(source_entity), self.namespace_internal["instancesHaveNoLabels"], rdflib.Literal(True)))
                 self.graph.add((rdflib.URIRef(source_entity), rdflib.RDFS.label, rdflib.Literal(self.get_label(source_entity))))
+                if mother_source:
+                    self.graph.add((rdflib.URIRef(source_entity), rdflib.RDFS.subClassOf, rdflib.URIRef(mother_source)))
 
             # Target entity
             if self.check_entity(target_entity) and target_entity not in entities:
@@ -144,6 +148,8 @@ class RdfGraph(object):
                 self.graph.add((rdflib.URIRef(target_entity), rdflib.RDF.type, rdflib.OWL.Class))
                 self.graph.add((rdflib.URIRef(target_entity), self.namespace_internal["instancesHaveNoLabels"], rdflib.Literal(True)))
                 self.graph.add((rdflib.URIRef(target_entity), rdflib.RDFS.label, rdflib.Literal(self.get_label(target_entity))))
+                if mother_target:
+                    self.graph.add((rdflib.URIRef(source_entity), rdflib.RDFS.subClassOf, rdflib.URIRef(mother_target)))
 
             # Relation
             if self.check_entity(relation):

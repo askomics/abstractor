@@ -187,7 +187,7 @@ class QueryLibrary(object):
             SPARQL query
         """
         return textwrap.dedent('''
-        SELECT DISTINCT ?source_entity ?relation ?target_entity
+        SELECT DISTINCT ?source_entity ?relation ?target_entity ?mother_source ?mother_target
         WHERE {{
             ?source_entity a owl:Class .
             ?source_entity rdfs:isDefinedBy <{ontology}> .
@@ -196,8 +196,18 @@ class QueryLibrary(object):
             ?target_entity rdfs:isDefinedBy <{ontology}> .
 
             ?relation a owl:ObjectProperty .
-            ?relation rdfs:domain ?source_entity .
             ?relation rdfs:range ?target_entity .
+            {{
+                ?relation rdfs:domain/(owl:unionOf/(rdf:rest*)/rdf:first) ?source_entity .
+            }} UNION {{
+                ?relation rdfs:domain ?source_entity .
+            }}
+            OPTIONAL {{
+                ?source_entity rdfs:subClassOf ?mother_source .
+            }}
+            OPTIONAL {{
+                ?target_entity rdfs:subClassOf ?mother_target .
+            }}
         }}
         '''.format(ontology=ontology))
 
@@ -218,9 +228,13 @@ class QueryLibrary(object):
             ?entity rdfs:isDefinedBy <{ontology}> .
             # Attribute
             ?attribute a owl:DatatypeProperty .
-            ?attribute rdfs:domain ?entity .
             ?attribute rdfs:range ?range .
             VALUES ?range {{ xsd:float xsd:int }} .
+            {{
+                ?attribute rdfs:domain/(owl:unionOf/(rdf:rest*)/rdf:first) ?entity .
+            }} UNION {{
+                ?attribute rdfs:domain ?entity .
+            }}
         }}
         '''.format(ontology=ontology))
 
@@ -241,8 +255,12 @@ class QueryLibrary(object):
             ?entity rdfs:isDefinedBy <{ontology}> .
             # Attribute
             ?attribute a owl:DatatypeProperty .
-            ?attribute rdfs:domain ?entity .
             ?attribute rdfs:range ?range .
             VALUES ?range {{ xsd:string }} .
+            {{
+                ?attribute rdfs:domain/(owl:unionOf/(rdf:rest*)/rdf:first) ?entity .
+            }} UNION {{
+                ?attribute rdfs:domain ?entity .
+            }}
         }}
         '''.format(ontology=ontology))
