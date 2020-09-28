@@ -72,6 +72,13 @@ Example with [NeXtProt](https://sparql.nextprot.org):
 abstractor -s https://sparql.nextprot.org -o nextprot_abstraction.ttl
 ```
 
+
+Example with [Uniprot](https://sparql.uniprot.org), using OWL:
+
+```bash
+abstractor -s https://sparql.nextprot.org -o nextprot_abstraction.ttl -m owl
+```
+
 #### With a RDF file
 
 ```bash

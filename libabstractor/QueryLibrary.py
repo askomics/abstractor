@@ -104,13 +104,20 @@ class QueryLibrary(object):
             SPARQL query
         """
         return textwrap.dedent('''
-        SELECT DISTINCT ?source_entity ?relation ?target_entity
+        SELECT DISTINCT ?source_entity ?relation ?target_entity ?mother_source ?mother_target
         WHERE {
             # Get entities
             ?instance_of_source a ?source_entity .
             ?instance_of_target a ?target_entity .
             # Relations
             ?instance_of_source ?relation ?instance_of_target .
+
+            OPTIONAL {{
+                ?source_entity rdfs:subClassOf ?mother_source .
+            }}
+            OPTIONAL {{
+                ?target_entity rdfs:subClassOf ?mother_target .
+            }}
         }
         ''')
 

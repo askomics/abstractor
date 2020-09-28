@@ -25,8 +25,8 @@ class Abstractor(object):
         parser.add_argument("-o", "--output", type=str, help="Output file", default="abstraction.rdf")
         parser.add_argument("-f", "--output-format", choices=['xml', 'turtle', 'nt'], help="RDF format", default="turtle")
 
-        parser.add_argument("-m", "--mode", choices=["a", "b", "owl"], help="Scan mode: a: 3 queries to get all entities,\
-         relation and attributes. b: 3 queries for each entity. owl: 3 queries using existant owl ontology", default="a")
+        parser.add_argument("-m", "--mode", choices=["all", "batch", "owl", "askomics"], help="Scan mode: all: 3 queries to get all entities,\
+         relation and attributes. batch: 3 queries for each entity. owl: 3 queries using existant owl ontology. askomics: 3 queries using askomics ontology (NOT IMPLEMENTED YET)", default="all")
 
         parser.add_argument("-v", "--verbosity", action="count", help="increase output verbosity")
 
@@ -54,7 +54,7 @@ class Abstractor(object):
         if self.args.source_type == "sparql":
             rdf.add_location(self.args.source)
 
-        if self.args.mode == "a":
+        if self.args.mode == "all":
             logging.debug("Get entities and relation")
             rdf.add_entities_and_relations(sparql.process_query(library.entities_and_relations))
             logging.debug("Get decimal attributes")
@@ -62,7 +62,7 @@ class Abstractor(object):
             logging.debug("Get text attributes")
             rdf.add_text_attributes(sparql.process_query(library.entities_and_text_attributes))
 
-        elif self.args.mode == "b":
+        elif self.args.mode == "batch":
             logging.debug("Get all entities, then, get relations and attributes for each entity")
             entities = sparql.process_query(library.get_entities)
             rdf.add_entities(entities)
@@ -83,7 +83,7 @@ class Abstractor(object):
                         rdf.add_attribute(entity, attribute_dict["attribute"], decimal=False)
 
         elif self.args.mode == "owl":
-            logging.debug("Use OWL Ontology")
+            logging.debug("Use OWL ontology")
             result = sparql.process_query(library.ontologies)
             for res in result:
                 logging.debug(res["ontology"])
@@ -93,6 +93,10 @@ class Abstractor(object):
                 rdf.add_decimal_attributes(sparql.process_query(library.entities_and_numeric_attributes_with_ontology(res["ontology"])))
                 logging.debug("Get text attributes")
                 rdf.add_text_attributes(sparql.process_query(library.entities_and_text_attributes_with_ontology(res["ontology"])))
+
+        elif self.args.mode == "askomics":
+            logging.debug("Use AskOmics ontology")
+            raise NotImplementedError
 
         logging.debug("Write RDF ({}) into {}".format(self.args.output_format, self.args.output))
         rdf.graph.serialize(destination=self.args.output, format=self.args.output_format, encoding="utf-8" if self.args.output_format == "turtle" else None)
