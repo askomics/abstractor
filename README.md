@@ -79,6 +79,12 @@ Example with [Uniprot](https://sparql.uniprot.org), using OWL:
 abstractor -s https://sparql.nextprot.org -o nextprot_abstraction.ttl -m owl
 ```
 
+#### With Askomics SPARQL endpoint
+
+```bash
+abstractor --askomics-internal-namespace http://askomics.org/internal/ -s https://bbip.askomics.org/virtuoso/sparql -o askomics_bbip.ttl -m askomics
+```
+
 #### With a RDF file
 
 ```bash
