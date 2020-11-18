@@ -26,7 +26,7 @@ class Abstractor(object):
         parser.add_argument("-f", "--output-format", choices=['xml', 'turtle', 'nt'], help="RDF format", default="turtle")
 
         parser.add_argument("-m", "--mode", choices=["all", "batch", "owl", "askomics"], help="Scan mode: all: 3 queries to get all entities,\
-         relation and attributes. batch: 3 queries for each entity. owl: 3 queries using existant owl ontology. askomics: 3 queries using askomics ontology (NOT IMPLEMENTED YET)", default="all")
+         relation and attributes. batch: 3 queries for each entity. owl: 3 queries using existant owl ontology. askomics: queries using askomics ontology", default="all")
 
         parser.add_argument("-v", "--verbosity", action="count", help="increase output verbosity")
 
