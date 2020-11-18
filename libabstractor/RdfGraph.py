@@ -1,6 +1,7 @@
 import rdflib
 import re
-
+import os
+from datetime import datetime
 
 class RdfGraph(object):
     """Summary
@@ -25,6 +26,7 @@ class RdfGraph(object):
         self.graph = rdflib.Graph()
 
         self.graph.bind('askomics', namespace_internal)
+        self.graph.bind('owl', "http://www.w3.org/2002/07/owl#")
         self.prov = rdflib.Namespace('http://www.w3.org/ns/prov#')
 
     def check_entity(self, entity):
@@ -42,7 +44,9 @@ class RdfGraph(object):
         """
         excluded_namespaces = (
             "http://www.w3.org",
-            "http://www.openlinksw.com"
+            "http://www.openlinksw.com",
+            self.namespace_internal[""],
+            "http://biohackathon.org/resource/faldo"
         )
 
         if entity.lower().startswith(excluded_namespaces):
@@ -57,7 +61,10 @@ class RdfGraph(object):
         location : str
             URL of distant endpoint
         """
+        self.graph.add((rdflib.BNode("graph"), rdflib.RDF.type, self.prov["Entity"]))
         self.graph.add((rdflib.BNode("graph"), self.prov.atLocation, rdflib.Literal(location)))
+        self.graph.add((rdflib.BNode("graph"), self.prov.generatedAtTime, rdflib.Literal(datetime.now())))
+        self.graph.add((rdflib.BNode("graph"), self.prov.wasGeneratedBy, rdflib.URIRef("https://github.com/askomics/abstractor")))
 
     def add_entities(self, sparql_result):
         """Add entities
@@ -158,6 +165,112 @@ class RdfGraph(object):
                 self.graph.add((rdflib.URIRef(relation), rdflib.RDFS.label, rdflib.Literal(self.get_label(relation))))
                 self.graph.add((rdflib.URIRef(relation), rdflib.RDFS.domain, rdflib.URIRef(source_entity)))
                 self.graph.add((rdflib.URIRef(relation), rdflib.RDFS.range, rdflib.URIRef(target_entity)))
+
+    def add_entities_askomics(self, sparql_result):
+        """Add entities (Askomics definition) in the rdf graph
+
+        Parameters
+        ----------
+        sparql_result : list
+            Sparql result
+        """
+        # ?entity ?startPoint ?faldoObject
+        for result in sparql_result:
+            entity       = result["entity"]
+            label        = result["label"]
+            start_point  = bool(result["startPoint"].lower() in ['true','1'])
+            faldo_object = bool(result["faldoObject"].lower() in ['true','1'])
+
+            self.graph.add((rdflib.URIRef(entity), rdflib.RDF.type, self.namespace_internal["entity"]))
+            self.graph.add((rdflib.URIRef(entity), rdflib.RDF.type, rdflib.OWL.Class))
+            self.graph.add((rdflib.URIRef(entity), rdflib.RDFS.label, rdflib.Literal(label)))
+            if start_point :
+                self.graph.add((rdflib.URIRef(entity), rdflib.RDF.type, self.namespace_internal["startPoint"]))
+            if faldo_object :
+                self.graph.add((rdflib.URIRef(entity), rdflib.RDF.type, self.namespace_internal["faldo"]))
+
+    def add_relations_askomics(self, sparql_result):
+        """Add entities (Askomics definition) in the rdf graph
+
+        Parameters
+        ----------
+        sparql_result : list
+            Sparql result
+        """
+        #?entitySource ?entityTarget ?relation
+        for result in sparql_result:
+            entity_source       = result["entitySource"]
+            entity_target       = result["entityTarget"]
+            relation            = result["relation"]
+            label               = result["label"]
+
+            self.graph.add((rdflib.URIRef(relation), rdflib.RDF.type, self.namespace_internal["AskomicsRelation"]))
+            self.graph.add((rdflib.URIRef(relation), rdflib.RDF.type, rdflib.OWL.ObjectProperty))
+            self.graph.add((rdflib.URIRef(relation), rdflib.RDFS.domain, rdflib.URIRef(entity_source)))
+            self.graph.add((rdflib.URIRef(relation), rdflib.RDFS.range, rdflib.URIRef(entity_target)))
+            self.graph.add((rdflib.URIRef(relation), rdflib.RDFS.label, rdflib.Literal(label)))
+
+
+    def add_attributes_askomics(self, sparql_result):
+        """Add attributes (Askomics definition) in the rdf graph
+
+        Parameters
+        ----------
+        sparql_result : list
+            Sparql result
+        """
+        #?entity ?att ?label ?range ?faldoStart ?faldoEnd
+        for result in sparql_result:
+            entity       = result["entity"]
+            att          = result["att"]
+            label        = result["label"]
+            range        = result["range"]
+            faldo_start  = bool(result["faldoStart"].lower() in ['true','1'])
+            faldo_end    = bool(result["faldoEnd"].lower() in ['true','1'])
+
+            self.graph.add((rdflib.URIRef(att), rdflib.RDF.type, rdflib.OWL.DatatypeProperty))
+            self.graph.add((rdflib.URIRef(att), rdflib.RDFS.domain, rdflib.URIRef(entity)))
+            self.graph.add((rdflib.URIRef(att), rdflib.RDFS.range, rdflib.URIRef(range)))
+            self.graph.add((rdflib.URIRef(att), rdflib.RDFS.label, rdflib.Literal(label)))
+            if faldo_start :
+                self.graph.add((rdflib.URIRef(att), rdflib.RDF.type, self.namespace_internal["faldoStart"]))
+            if faldo_end :
+                self.graph.add((rdflib.URIRef(att), rdflib.RDF.type, self.namespace_internal["faldoEnd"]))
+
+    def add_categories_askomics(self, sparql_result):
+        """Add categories (Askomics definition) in the rdf graph
+
+        Parameters
+        ----------
+        sparql_result : list
+            Sparql result
+        """
+        categories = []
+        #?cat ?label ?entity ?catValueType ?valueCategory valueCategoryLabel ?faldoReference
+        for result in sparql_result:
+            entity                  = result["entity"]
+            cat                     = result["cat"]
+            label                   = result["label"]
+            category_type           = result["catValueType"]
+            category_value          = result["valueCategory"]
+            category_value_label    = result["valueCategoryLabel"]
+            category_value_type     = result["valueCategoryType"]
+            faldo_ref               = bool(result["faldoReference"].lower() in ['true','1'])
+
+            if cat not in categories:
+                categories.append(cat)
+                self.graph.add((rdflib.URIRef(cat), rdflib.RDF.type, self.namespace_internal["AskomicsCategory"]))
+                self.graph.add((rdflib.URIRef(cat), rdflib.RDF.type, rdflib.OWL.ObjectProperty))
+                self.graph.add((rdflib.URIRef(cat), rdflib.RDFS.label, rdflib.Literal(label)))
+                self.graph.add((rdflib.URIRef(cat), rdflib.RDFS.domain, rdflib.URIRef(entity)))
+                self.graph.add((rdflib.URIRef(cat), rdflib.RDFS.range, rdflib.URIRef(category_type)))
+                if faldo_ref :
+                    self.graph.add((rdflib.URIRef(cat), rdflib.RDF.type, self.namespace_internal["faldoReference"]))
+
+            self.graph.add((rdflib.URIRef(category_type), self.namespace_internal["category"], rdflib.URIRef(category_value)))
+            self.graph.add((rdflib.URIRef(category_value), rdflib.RDFS.label, rdflib.Literal(category_value_label)))
+            self.graph.add((rdflib.URIRef(category_value), rdflib.RDF.type, rdflib.URIRef(category_value_type)))
+
 
     def add_decimal_attributes(self, sparql_result):
         """Add decimal  in the rdf graph
