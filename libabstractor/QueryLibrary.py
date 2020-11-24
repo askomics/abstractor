@@ -3,6 +3,7 @@ import textwrap
 
 class QueryLibrary(object):
     """SPARQL methods"""
+    askomics_ns = "http://askomics.org/internal/"
 
     def __init__(self):
         """init"""
@@ -118,6 +119,98 @@ class QueryLibrary(object):
             OPTIONAL {{
                 ?target_entity rdfs:subClassOf ?mother_target .
             }}
+        }
+        ''')
+
+    @property
+    def entities_askomics(self):
+        """Sparql query to get entities and relations
+
+        Returns
+        -------
+        str
+            SPARQL query
+        """
+
+        return textwrap.dedent('''
+        SELECT DISTINCT ?entity ?label ?startPoint ?faldoObject
+        WHERE {
+            # Get entities
+            ?entity a <'''+ self.askomics_ns +'''entity> .
+            ?entity rdfs:label ?label .
+            bind( exists { ?entity a <'''+ self.askomics_ns +'''startPoint> } as ?startPoint )
+            bind( exists { ?entity a <'''+ self.askomics_ns +'''faldo> } as ?faldoObject )
+        }
+        ''')
+
+    @property
+    def relations_askomics(self):
+        """Sparql query to get entities and relations
+
+        Returns
+        -------
+        str
+            SPARQL query
+        """
+        return textwrap.dedent('''
+        SELECT DISTINCT ?entitySource ?entityTarget ?relation ?label
+        WHERE {
+            # Get entities
+
+            ?entitySource a <'''+ self.askomics_ns +'''entity> .
+            ?entityTarget a <'''+ self.askomics_ns +'''entity> .
+
+            ?relation rdfs:domain ?entitySource  .
+            ?relation rdfs:range ?entityTarget  .
+            ?relation rdfs:label ?label .
+        }
+        ''')
+
+    @property
+    def attributes_askomics(self):
+        """Sparql query to get entities and numeric attributes
+
+        Returns
+        -------
+        str
+            SPARQL query
+        """
+        return textwrap.dedent('''
+        SELECT DISTINCT ?entity ?att ?label ?range ?faldoStart ?faldoEnd
+        WHERE {
+            ?entity a <'''+ self.askomics_ns +'''entity> .
+            ?att rdfs:domain ?entity  .
+            ?att rdfs:range ?range  .
+            ?att rdfs:label ?label .
+            filter( strstarts(str(?range), "http://www.w3.org/2001/XMLSchema#") )
+            bind( exists { ?att a <'''+ self.askomics_ns +'''faldoStart> } as ?faldoStart )
+            bind( exists { ?att a <'''+ self.askomics_ns +'''faldoEnd> } as ?faldoEnd )
+        }
+        ''')
+
+
+    @property
+    def categories_askomics(self):
+        """Sparql query to get Askomics categories attributes
+
+        Returns
+        -------
+        str
+            SPARQL query
+        """
+        return textwrap.dedent('''
+        SELECT DISTINCT ?cat ?label ?entity ?catValueType ?valueCategory ?valueCategoryLabel ?valueCategoryType ?faldoReference
+        WHERE {
+            ?cat a <'''+ self.askomics_ns +'''AskomicsCategory> .
+            ?cat rdfs:domain ?entity  .
+            ?cat rdfs:range ?catValueType  .
+            ?cat rdfs:label ?label .
+
+            ?catValueType <'''+ self.askomics_ns +'''category> ?valueCategory.
+            ?valueCategory rdfs:label ?valueCategoryLabel .
+            ?valueCategory a ?valueCategoryType .
+
+            bind( exists { ?cat a <'''+ self.askomics_ns +'''faldoReference> } as ?faldoReference )
         }
         ''')
 

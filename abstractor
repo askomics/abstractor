@@ -26,7 +26,7 @@ class Abstractor(object):
         parser.add_argument("-f", "--output-format", choices=['xml', 'turtle', 'nt'], help="RDF format", default="turtle")
 
         parser.add_argument("-m", "--mode", choices=["all", "batch", "owl", "askomics"], help="Scan mode: all: 3 queries to get all entities,\
-         relation and attributes. batch: 3 queries for each entity. owl: 3 queries using existant owl ontology. askomics: 3 queries using askomics ontology (NOT IMPLEMENTED YET)", default="all")
+         relation and attributes. batch: 3 queries for each entity. owl: 3 queries using existant owl ontology. askomics: queries using askomics ontology", default="all")
 
         parser.add_argument("-v", "--verbosity", action="count", help="increase output verbosity")
 
@@ -49,7 +49,9 @@ class Abstractor(object):
         sparql = SparqlQuery(self.args.source, self.args.source_type)
         library = QueryLibrary()
 
-        rdf = RdfGraph(self.args.askomics_internal_namespace)
+        askomics_ns = self.args.askomics_internal_namespace
+
+        rdf = RdfGraph(askomics_ns)
 
         if self.args.source_type == "sparql":
             rdf.add_location(self.args.source)
@@ -96,7 +98,16 @@ class Abstractor(object):
 
         elif self.args.mode == "askomics":
             logging.debug("Use AskOmics ontology")
-            raise NotImplementedError
+            library.askomics_ns = askomics_ns
+            logging.debug("Get Askomics entities")
+            rdf.add_entities_askomics(sparql.process_query(library.entities_askomics))
+            logging.debug("Get Askomics relations")
+            rdf.add_relations_askomics(sparql.process_query(library.relations_askomics))
+            logging.debug("Get Askomics attributes")
+            rdf.add_attributes_askomics(sparql.process_query(library.attributes_askomics))
+            logging.debug("Get Askomics categories")
+            rdf.add_categories_askomics(sparql.process_query(library.categories_askomics))
+
 
         logging.debug("Write RDF ({}) into {}".format(self.args.output_format, self.args.output))
         rdf.graph.serialize(destination=self.args.output, format=self.args.output_format, encoding="utf-8" if self.args.output_format == "turtle" else None)
