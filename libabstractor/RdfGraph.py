@@ -1,7 +1,7 @@
+from datetime import datetime
 import re
 
 import rdflib
-from datetime import datetime
 
 
 class RdfGraph(object):
@@ -225,8 +225,8 @@ class RdfGraph(object):
             att = result["att"]
             label = result["label"]
             range = result["range"]
-            faldo_start = bool(result["faldoStart"].lower() in ['true','1'])
-            faldo_end = bool(result["faldoEnd"].lower() in ['true','1'])
+            faldo_start = bool(result["faldoStart"].lower() in ['true', '1'])
+            faldo_end = bool(result["faldoEnd"].lower() in ['true', '1'])
 
             self.graph.add((rdflib.URIRef(att), rdflib.RDF.type, rdflib.OWL.DatatypeProperty))
             self.graph.add((rdflib.URIRef(att), rdflib.RDFS.domain, rdflib.URIRef(entity)))

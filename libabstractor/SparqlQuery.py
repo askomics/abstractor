@@ -1,6 +1,6 @@
 import logging
 
-from SPARQLWrapper import SPARQLWrapper, JSON
+from SPARQLWrapper import JSON, SPARQLWrapper
 
 import rdflib
 

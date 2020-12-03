@@ -2,12 +2,12 @@ from setuptools import setup, find_packages
 
 setup(
     name='abstractor',
-    version='4.2.0',
+    version='4.1.1',
     description='Abstraction generator for AskOmics, from a distant SPARQL endpoint',
     author='Xavier Garnier',
     author_email='xavier.garnier@irisa.fr',
     url='https://github.com/askomics/abstractor',
-    download_url='https://github.com/askomics/abstractor/archive/4.2.0.tar.gz',
+    download_url='https://github.com/askomics/abstractor/archive/4.1.1.tar.gz',
     install_requires=['SPARQLWrapper'],
     packages=find_packages(),
     license='AGPL',
