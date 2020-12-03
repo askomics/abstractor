@@ -1,10 +1,11 @@
 #! /usr/bin/python3
 
-import logging
 import argparse
-from libabstractor.SparqlQuery import SparqlQuery
+import logging
+
 from libabstractor.QueryLibrary import QueryLibrary
 from libabstractor.RdfGraph import RdfGraph
+from libabstractor.SparqlQuery import SparqlQuery
 
 
 class Abstractor(object):
@@ -107,7 +108,6 @@ class Abstractor(object):
             rdf.add_attributes_askomics(sparql.process_query(library.attributes_askomics))
             logging.debug("Get Askomics categories")
             rdf.add_categories_askomics(sparql.process_query(library.categories_askomics))
-
 
         logging.debug("Write RDF ({}) into {}".format(self.args.output_format, self.args.output))
         rdf.graph.serialize(destination=self.args.output, format=self.args.output_format, encoding="utf-8" if self.args.output_format == "turtle" else None)
