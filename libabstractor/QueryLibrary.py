@@ -136,10 +136,10 @@ class QueryLibrary(object):
         SELECT DISTINCT ?entity ?label ?startPoint ?faldoObject
         WHERE {
             # Get entities
-            ?entity a <'''+ self.askomics_ns +'''entity> .
+            ?entity a <''' + self.askomics_ns + '''entity> .
             ?entity rdfs:label ?label .
-            bind( exists { ?entity a <'''+ self.askomics_ns +'''startPoint> } as ?startPoint )
-            bind( exists { ?entity a <'''+ self.askomics_ns +'''faldo> } as ?faldoObject )
+            bind( exists { ?entity a <''' + self.askomics_ns + '''startPoint> } as ?startPoint )
+            bind( exists { ?entity a <''' + self.askomics_ns + '''faldo> } as ?faldoObject )
         }
         ''')
 
@@ -157,8 +157,8 @@ class QueryLibrary(object):
         WHERE {
             # Get entities
 
-            ?entitySource a <'''+ self.askomics_ns +'''entity> .
-            ?entityTarget a <'''+ self.askomics_ns +'''entity> .
+            ?entitySource a <''' + self.askomics_ns + '''entity> .
+            ?entityTarget a <''' + self.askomics_ns + '''entity> .
 
             ?relation rdfs:domain ?entitySource  .
             ?relation rdfs:range ?entityTarget  .
@@ -178,16 +178,15 @@ class QueryLibrary(object):
         return textwrap.dedent('''
         SELECT DISTINCT ?entity ?att ?label ?range ?faldoStart ?faldoEnd
         WHERE {
-            ?entity a <'''+ self.askomics_ns +'''entity> .
+            ?entity a <''' + self.askomics_ns + '''entity> .
             ?att rdfs:domain ?entity  .
             ?att rdfs:range ?range  .
             ?att rdfs:label ?label .
             filter( strstarts(str(?range), "http://www.w3.org/2001/XMLSchema#") )
-            bind( exists { ?att a <'''+ self.askomics_ns +'''faldoStart> } as ?faldoStart )
-            bind( exists { ?att a <'''+ self.askomics_ns +'''faldoEnd> } as ?faldoEnd )
+            bind( exists { ?att a <''' + self.askomics_ns + '''faldoStart> } as ?faldoStart )
+            bind( exists { ?att a <''' + self.askomics_ns + '''faldoEnd> } as ?faldoEnd )
         }
         ''')
-
 
     @property
     def categories_askomics(self):
@@ -201,16 +200,16 @@ class QueryLibrary(object):
         return textwrap.dedent('''
         SELECT DISTINCT ?cat ?label ?entity ?catValueType ?valueCategory ?valueCategoryLabel ?valueCategoryType ?faldoReference
         WHERE {
-            ?cat a <'''+ self.askomics_ns +'''AskomicsCategory> .
+            ?cat a <''' + self.askomics_ns + '''AskomicsCategory> .
             ?cat rdfs:domain ?entity  .
             ?cat rdfs:range ?catValueType  .
             ?cat rdfs:label ?label .
 
-            ?catValueType <'''+ self.askomics_ns +'''category> ?valueCategory.
+            ?catValueType <''' + self.askomics_ns + '''category> ?valueCategory.
             ?valueCategory rdfs:label ?valueCategoryLabel .
             ?valueCategory a ?valueCategoryType .
 
-            bind( exists { ?cat a <'''+ self.askomics_ns +'''faldoReference> } as ?faldoReference )
+            bind( exists { ?cat a <''' + self.askomics_ns + '''faldoReference> } as ?faldoReference )
         }
         ''')
 

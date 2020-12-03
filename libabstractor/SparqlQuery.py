@@ -1,6 +1,8 @@
 import logging
-import rdflib
+
 from SPARQLWrapper import SPARQLWrapper, JSON
+
+import rdflib
 
 
 class SparqlQuery(object):

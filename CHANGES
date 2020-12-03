@@ -1,0 +1,36 @@
+# 4.2.0
+
+- Implement askomics mode (abstractor -m askomics). Don't forget to use --askomics-internal-namespace, if relevant.
+
+# 4.1.0
+
+- Get rdfs:subClassOf of each entities
+- 3 modes:
+    - all: get abstraction with 3 queries
+    - batch: get abstraction using 3 queries for each entities
+    - owl: use OWL ontology
+    - askomics: use askomics ontology (not implemented yet)
+
+# 4.0.0
+
+- Abstractor compatible with AskOmics 4.0.0
+
+# 2.0.0
+
+- Generate abstraction from sparql endpoint or RDF
+- Don't use a base uri for entity, but remove owl, rdf, rdfs, and virtuoso things.
+
+# 1.2.0
+
+- Use rdflib to generate rdf
+- Add option for serialization format (xml, turtle, nt)
+- Generate abstraction for source entities (bugfix)
+
+# 1.1.0
+
+- AskOmics prefix option
+- InstancesHaveNoLables triple
+
+# 1.0.5
+
+- Store prefixes into SparqlQuery class
